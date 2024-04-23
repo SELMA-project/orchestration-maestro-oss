@@ -1,0 +1,142 @@
+version: "3.1"
+
+services:
+  job_queue:
+    image: rabbitmq:3.9.13-management
+    ports:
+      - 5672:5672
+      - 15672:15672
+    volumes:
+      - "./config/rabbitmq:/etc/rabbitmq"
+  maestro:
+    build:
+      context: ./
+      dockerfile: ./maestro/Dockerfile
+    image: orchestration-maestro
+    # volumes:
+    # - "./db:/db/"
+
+    environment:
+      Development__RecreateDatabase: "true"
+      # To use Postgres:
+      ConnectionStrings__SelmaDBConnection: "Host=local_db;Port=5432;Database=Selma-dev;Username=Selma-dev;Password=password;"
+      # ConnectionStrings__SelmaDBConnection:  "Data Source=/db/orchestrator.db"
+      RabbitMQ__Url: "amqp://job_queue:5672"
+    ports:
+      - 10000:10000
+  worker-example:
+    build:
+      context: ./
+      dockerfile: ./worker-example/Dockerfile
+    image: worker-example
+    environment:
+      RabbitMQ__Url: "amqp://job_queue:5672"
+  # worker-example2:
+  #   build:
+  #     context: ./
+  #     dockerfile: ./worker-example/Dockerfile
+  #   image: worker-example
+  #   environment:
+  #     RabbitMQ__Url: "amqp://job_queue:5672"
+  # worker-example3:
+  #   build:
+  #     context: ./
+  #     dockerfile: ./worker-example/Dockerfile
+  #   image: worker-example
+  #   environment:
+  #     RabbitMQ__Url: "amqp://job_queue:5672"
+  # worker-example4:
+  #   build:
+  #     context: ./
+  #     dockerfile: ./worker-example/Dockerfile
+  #   image: worker-example
+  #   environment:
+  #     RabbitMQ__Url: "amqp://job_queue:5672"
+  # worker-example5:
+  #   build:
+  #     context: ./
+  #     dockerfile: ./worker-example/Dockerfile
+  #   image: worker-example
+  #   environment:
+  #     RabbitMQ__Url: "amqp://job_queue:5672"
+  worker-easynmt:
+    build:
+      context: ./
+      dockerfile: ./worker-easynmt/Dockerfile
+    image: worker-easynmt
+    environment:
+      RabbitMQ__Url: "amqp://job_queue:5672"
+  worker-easypython:
+    build:
+      context: ./
+      dockerfile: ./worker-easypython/Dockerfile
+    image: worker-easypython
+    environment:
+      RabbitMQ__Url: "amqp://job_queue:5672"
+  worker-rest:
+    build:
+      context: ./
+      dockerfile: ./worker-rest/Dockerfile
+    image: worker-rest
+    environment:
+      RabbitMQ__Url: "amqp://job_queue:5672"
+  worker-js:
+    build:
+      context: ./
+      dockerfile: ./worker-js/Dockerfile
+    image: orchestration-javascript
+    environment:
+      RabbitMQ__Url: "amqp://job_queue:5672"
+  worker-sidecar:
+    image: worker-sidecar
+    env_file: .env
+    build:
+      context: ./
+      dockerfile: ./worker-sidecar/Dockerfile
+    environment:
+      RabbitMQ__Url: "amqp://job_queue:5672"
+  #      SidecarWorker__WorkerType: "JavascriptSC"
+  #      SidecarWorker__Script: "/scripts/script.js"
+  #      InputQueue__Name: "SC.Summarizer.GLOBAL"
+  #    volumes:
+  #      - ./worker-js/script-examples/summarizer.js:/scripts/script.js
+  local_db:
+    image: postgres:12
+    environment:
+      POSTGRES_PASSWORD: password
+      POSTGRES_USER: Selma-dev
+      POSTGRES_DB: Selma-dev
+    ports:
+      - "54321:5432"
+
+  orch_ui:
+    env_file: .env
+    image: orchestration-ui
+    build:
+      context: .
+      dockerfile: ./orchestration-ui/Dockerfile
+    environment:
+      RabbitMQ__Url: "amqp://job_queue:5672"
+      MAESTRO_URL: "http://maestro:10000/Orchestration/Graph"
+      # Ensure we listen on any IP Address
+      ASPNETCORE_URLS: "http://+:80"
+    ports:
+      - "7032:80"
+
+  job-archiver:
+    env_file: .env
+    image: orchestration-maestro-archiver
+    build:
+      context: .
+      dockerfile: ./job-archiver/Dockerfile
+#    environment:
+#      JobArchiver__Enabled: "true"
+#      JobArchiver__OutputDirectory: "/app/archives"
+#      JobArchiver__Interval: "01:00"
+#      JobArchiver__MaxAge: "7.00:00"
+#      JobArchiver__OnlyArchiveCompletedJobs: "false"
+#      JobArchiver__BatchSize: 1000
+#      JobArchiver__RetryDelayMs: 30000
+#      ConnectionStrings__SelmaDBConnection: "Host=host.docker.internal;Port=64333;Database=monitio-orchestration-dev;Username=monitio-dev;Password=guest;"
+#    volumes:
+#      - ./archives:/app/archives

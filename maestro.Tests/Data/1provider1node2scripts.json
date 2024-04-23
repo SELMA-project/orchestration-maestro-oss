@@ -1,0 +1,54 @@
+{
+  "workflowId": "55d72ce8-aec7-4e11-b6ae-df3f17bbb792",
+  "jobNodes": [
+    {
+      "id": "11b5f2a3-cbf0-42ee-9b1b-b4632f5b1696",
+      "dependencies": [],
+      "jobData": {
+        "sourceItemScenarios": [
+          "DEV"
+        ],
+        "feedURL": "https://fairplay.pt/feed/",
+        "sourceItemType": "Article",
+        "sourceItemPageUrl": "http://fairplay.pt/modalidades/futebol-de-praia/sorteio-do-mundial-definido/",
+        "sourceItemDnsList": null,
+        "sourceItemIdAtOrigin": "2a846812-c3af-4972-9601-b914f0849faa",
+        "sourceItemOriginFeedName": "Fair Play",
+        "sourceItemLangeCodeGuess": "",
+        "sourceItemTitle": "Sorteio do Mundial de Futebol de Praia 2021 definido!",
+        "sourceItemMainText": "",
+        "sourceItemTeaser": "Portugal ficou a conhecer os adversários da fase de grupos do Mundial FIFA 2021, na Rússia. Que duelos nos reserva a primeira fase do mundial?\n The post Sorteio do Mundial de Futebol de Praia 2021 definido! appeared first on Fair Play.\n ",
+        "sourceItemKeywords": [
+          "Futebol de Praia",
+          "EU",
+          "PT",
+          "Fair Play"
+        ],
+        "sourceItemPhotoURL": "https://i2.wp.com/fairplay.pt/wp-content/uploads/2021/07/aaaabswc.jpg?fit=2048%2C1152&amp;ssl=1",
+        "sourceItemDate": "2021-07-12 17:24:46",
+        "originalFormatting": {
+          "sourceItemScopes": [
+            "Online Media",
+            "national",
+            "specialized",
+            "ERC",
+            "EU",
+            "PT"
+          ],
+          "sourceItemCannonicalUrl": "http://fairplay.pt/modalidades/futebol-de-praia/sorteio-do-mundial-definido/",
+          "sourceItemUrlList": [
+            "https://fairplay.pt/modalidades/futebol-de-praia/sorteio-do-mundial-definido3/",
+            "http://fairplay.pt/modalidades/futebol-de-praia/sorteio-do-mundial-definido3/",
+            "fairplay.pt/modalidades/futebol-de-praia/sorteio-do-mundial-definido3/"
+          ]
+        }
+      },
+      "jobType": "StringInverter",
+      "jobProvider": "Selma",
+      "scripts": {
+        "input": "return { 'Text': _input.sourceItemType };",
+        "output": "return { 'sourceItemType': _input.Text };"
+      }
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<TargetFramework>net6.0</TargetFramework>
+		<OutputType>Exe</OutputType>
+		<RootNamespace>Selma.Orchestration.WorkerJS</RootNamespace>
+		<PackageId>Selma.Orchestration.WorkerJS</PackageId>
+		<Authors>ama</Authors>
+		<Description>Library for creating workers that execute JavaScript code embedded in the message payload.</Description>
+		<Company>Selma</Company>
+		<PackageVersion>2.9.3</PackageVersion>
+	</PropertyGroup>
+	<ItemGroup>
+		<PackageReference Include="Jint" Version="3.0.0-beta-2037" />
+		<PackageReference Include="nlog" Version="5.0.1" />
+		<PackageReference Include="nlog.extensions.logging" Version="5.0.1" />
+		<ProjectReference Include="..\worker-template\worker-template.csproj" />
+		<ProjectReference Include="..\worker-js-lib\worker-js-lib.csproj" />
+		<ProjectReference Include="..\orchestration-common\orchestration-common.csproj" />
+	</ItemGroup>
+	<ItemGroup>
+		<None Include="appsettings.json" CopyToPublishDirectory="Always" CopyToOutputDirectory="PreserveNewest" />
+		<None Include="nlog.config" CopyToPublishDirectory="Always" />
+	</ItemGroup>
+	<Target Name="CopyNLogToDebug" AfterTargets="AfterBuild">
+		<Copy SourceFiles="nlog.config" DestinationFolder="bin\debug\net5.0" />
+	</Target>
+	<Target Name="CopyNLogToRelease" AfterTargets="AfterBuild">
+		<Copy SourceFiles="nlog.config" DestinationFolder="bin\release\net5.0" />
+	</Target>
+</Project>

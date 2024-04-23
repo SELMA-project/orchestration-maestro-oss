@@ -1,0 +1,18 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <OutputType>Exe</OutputType>
+	<ImplicitUsings>enable</ImplicitUsings>
+	<Nullable>enable</Nullable>
+  </PropertyGroup>
+  <ItemGroup>
+
+    <ProjectReference Include="..\worker-template\worker-template.csproj" />
+    <ProjectReference Include="..\worker-sidecar-modules\worker-sidecar-modules.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+		<None Include="appsettings.json" CopyToPublishDirectory="Always" CopyToOutputDirectory="PreserveNewest" />
+	</ItemGroup>
+
+
+</Project>

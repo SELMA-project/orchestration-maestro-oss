@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <RootNamespace>worker_sidecar.Tests</RootNamespace>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\common\testingutils\testingutils.csproj" />
+    <ProjectReference Include="..\worker-sidecar\worker-sidecar.csproj" />
+    <ProjectReference Include="..\worker-sidecar-modules\worker-sidecar-modules.csproj" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.3.2" />
+    <PackageReference Include="xunit" Version="2.4.2" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.4.5">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="coverlet.collector" Version="3.1.2">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="Newtonsoft.JSON" Version="13.0.1" />
+    <PackageReference Include="JsonDiffPatch.Net" Version="2.3.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="$(ProjectDir)Data\**" Exclude="**\*.cs" CopyToOutputDirectory="PreserveNewest" LinkBase="data\" />
+  </ItemGroup>
+</Project>

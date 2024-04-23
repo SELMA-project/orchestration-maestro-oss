@@ -1,0 +1,25 @@
+{
+  "workflowId": "ffa85f64-5717-4562-b3fc-2c963f66afa6",
+  "jobNodes": [
+    {
+      "id": "1816398a-87f7-4d77-9fdf-0030d1d854f0",
+      "dependencies": [],
+      "jobData": {
+        "Text": "Test 1."
+      },
+      "jobType": "StringInverter",
+      "jobProvider": "Selma"
+    },
+    {
+      "id": "2816398a-87f7-4d77-9fdf-0030d1d854f0",
+      "dependencies": [
+        "1816398a-87f7-4d77-9fdf-0030d1d854f0"
+      ],
+      "jobData": {
+        "Text": "Test 2."
+      },
+      "jobType": "StringInverter",
+      "jobProvider": "Selma"
+    }
+  ]
+}

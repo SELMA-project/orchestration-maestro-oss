@@ -1,0 +1,111 @@
+{
+  "workflowId": "ffa85f64-5717-4562-b3fc-2c963f66af00",
+  "jobNodes": [
+    {
+      "jobResult": {
+        "Timestamp": "2021-12-27T17:10:36.8482157+00:00",
+        "Text": ".4 tseT"
+      },
+      "status": "Done",
+      "id": "4816398a-87f7-4d77-9fdf-0030d1d85400",
+      "dependencies": [],
+      "jobData": {
+        "Text": "Test 4."
+      },
+      "jobType": "StringInverter",
+      "jobProvider": "Selma"
+    },
+    {
+      "jobResult": {
+        "Timestamp": "2021-12-27T17:10:36.8435517+00:00",
+        "Text": ".1 tseT"
+      },
+      "status": "Done",
+      "id": "1816398a-87f7-4d77-9fdf-0030d1d85400",
+      "dependencies": [],
+      "jobData": {
+        "Text": "Test 1."
+      },
+      "jobType": "StringInverter",
+      "jobProvider": "Selma"
+    },
+    {
+      "jobResult": {
+        "Timestamp": "2021-12-27T17:10:36.8446492+00:00",
+        "Text": ".2 tseT"
+      },
+      "status": "Done",
+      "id": "2816398a-87f7-4d77-9fdf-0030d1d85400",
+      "dependencies": [],
+      "jobData": {
+        "Text": "Test 2."
+      },
+      "jobType": "StringInverter",
+      "jobProvider": "Selma"
+    },
+    {
+      "jobResult": {
+        "Timestamp": "2021-12-27T17:10:36.8465381+00:00",
+        "Text": ".3 tseT"
+      },
+      "status": "Done",
+      "id": "3816398a-87f7-4d77-9fdf-0030d1d85400",
+      "dependencies": [],
+      "jobData": {
+        "Text": "Test 3."
+      },
+      "jobType": "StringInverter",
+      "jobProvider": "Selma"
+    },
+    {
+      "jobResult": {
+        "Timestamp": "2021-12-27T17:10:36.8504499+00:00",
+        "Text": ".5 tseT"
+      },
+      "status": "Done",
+      "id": "6816398a-87f7-4d77-9fdf-0030d1d85400",
+      "dependencies": [],
+      "jobData": {
+        "Text": "Test 5."
+      },
+      "jobType": "StringInverter",
+      "jobProvider": "Selma"
+    },
+    {
+      "jobResult": {
+        "Timestamp": "2021-12-27T17:10:36.8744791+00:00",
+        "Text": "Test 4."
+      },
+      "status": "Done",
+      "id": "5816398a-87f7-4d77-9fdf-0030d1d85400",
+      "dependencies": [
+        "3816398a-87f7-4d77-9fdf-0030d1d85400",
+        "4816398a-87f7-4d77-9fdf-0030d1d85400",
+        "1816398a-87f7-4d77-9fdf-0030d1d85400",
+        "2816398a-87f7-4d77-9fdf-0030d1d85400"
+      ],
+      "jobData": {
+        "Text": "Test 5."
+      },
+      "jobType": "StringInverter",
+      "jobProvider": "Selma"
+    },
+    {
+      "jobResult": {
+        "Timestamp": "2021-12-27T17:10:36.8881914+00:00",
+        "Text": ".4 tseT"
+      },
+      "status": "Done",
+      "id": "7816398a-87f7-4d77-9fdf-0030d1d85400",
+      "dependencies": [
+        "5816398a-87f7-4d77-9fdf-0030d1d85400"
+      ],
+      "jobData": {
+        "Text": "Test 5."
+      },
+      "jobType": "StringInverter",
+      "jobProvider": "Selma"
+    }
+  ],
+  "status": "Done"
+}

@@ -1,0 +1,7 @@
+bin/
+obj/
+.vscode/
+
+credentials.json
+deploy/
+log/

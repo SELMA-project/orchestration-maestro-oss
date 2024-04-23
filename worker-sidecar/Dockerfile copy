@@ -1,0 +1,28 @@
+FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build
+WORKDIR /source
+
+COPY orchestration-common orchestration-common
+COPY worker-template worker-template
+COPY worker-sidecar-modules worker-sidecar-modules
+COPY worker-js-lib worker-js-lib
+COPY worker-sidecar worker-sidecar
+COPY Protos Protos
+
+WORKDIR /source/worker-sidecar
+
+# Workaround for https://github.com/grpc/grpc/issues/18428
+# Also see https://github.com/sgerrand/alpine-pkg-glibc
+RUN apk update && apk --no-cache add ca-certificates wget
+RUN wget -q -O /etc/apk/keys/sgerrand.rsa.pub https://alpine-pkgs.sgerrand.com/sgerrand.rsa.pub
+RUN wget https://github.com/sgerrand/alpine-pkg-glibc/releases/download/2.34-r0/glibc-2.34-r0.apk
+RUN apk add --force-overwrite glibc-2.34-r0.apk
+
+RUN dotnet publish -c Debug -o /app/debug
+
+FROM mcr.microsoft.com/dotnet/sdk:6.0
+COPY --from=build /app/debug /app/debug
+
+WORKDIR /app/debug
+ENTRYPOINT ["dotnet", "./worker-sidecar.dll"]
+# To use release, on docker-compose do
+# working_dir: /app/release

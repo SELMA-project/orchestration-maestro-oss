@@ -1,0 +1,9 @@
+bin/
+obj/
+.vscode/
+
+appsettings.local.json
+credentials.json
+sox/
+deploy/
+log/

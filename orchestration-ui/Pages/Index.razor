@@ -1,0 +1,284 @@
+﻿@page "/"
+@using BlazorMonaco
+@using Newtonsoft.Json
+@using Newtonsoft.Json.Linq
+@using Selma.Orchestration.WorkerJSLib
+@using Selma.Orchestration.Models
+@using Selma.Orchestration.TaskMQUtils
+@inject IJSRuntime JSRuntime
+@inject ILogger<Index> Logger
+@inject IWebHostEnvironment WebHostEnvironment
+
+<h3>Code Editor</h3>
+<div class="container-fluid">
+  <div class="row mb-3">
+    <label class="col-auto col-form-label">Theme</label>
+    <div class="col-auto">
+      <select class="form-control" @onchange="ChangeTheme">
+        <option value="vs">Visual Studio</option>
+        <option value="vs-dark">Visual Studio Dark</option>
+        <option value="hc-black">High Contrast Black</option>
+      </select>
+    </div>
+    <label class="col-auto col-form-label">Import</label>
+    <div class="col-auto">
+      <input class="form-control" type="text" @bind="ValueToSet"/>
+    </div>
+    <div class="col-auto">
+      <button class="btn btn-secondary" @onclick="SetValue">Import from db format</button>
+    </div>
+    <div class="col-auto">
+      <button class="btn btn-secondary" @onclick="ExportToDatabase">Export to database</button>
+    </div>
+    <div class="col-auto">
+      <button class="btn btn-secondary" @onclick="ExportToJs">Export to Js</button>
+    </div>
+    <div class="col-auto">
+      <button class="btn btn-primary" @onclick="TestRun">Test Run</button>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-4">
+      <label class="col-form-label">Input</label>
+      <textarea class="form-control" @bind="InputRunValue" type="text" style="height: 600px;"></textarea>
+    </div>
+    <div class="col-8">
+      <label class="col-form-label" for="script-templates">Script: </label>
+      <select id="optionsDropdown" name="script-templates" class="col-form-select" @onchange="HandleDropdownChange">
+        @foreach (var option in Options)
+        {
+          <option value="@option.Value">@option.Name</option>
+        }
+      </select>
+
+
+      <MonacoEditor @ref="Editor" Id="sample-code-editor-123" ConstructionOptions="EditorConstructionOptions" OnDidInit="EditorOnDidInit" OnContextMenu="OnContextMenu"/>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-4">
+      <label class="col-form-label">Output</label>
+      <textarea class="form-control font-monospace" rows="20" type="text" @bind="OutputValue" 
+readonly style="background-color: #fff !important;"></textarea>
+    </div>
+    <div class="col-8">
+      <label class="col-form-label">Log</label>
+      <table>
+        @foreach (var message in LogMessages)
+        {
+          <tr>
+            <td class="font-monospace" style="white-space: pre-wrap">@message</td>
+          </tr>
+        }
+      </table>
+    </div>
+  </div>
+</div>
+
+
+@code {
+
+  public sealed class ListLogger : ILogger
+  {
+    private readonly ICollection<string> _messages;
+    private readonly LogLevel _level;
+
+    public ListLogger(ICollection<string> logMessages, LogLevel level = LogLevel.Debug)
+    {
+      _messages = logMessages;
+      _level = level;
+    }
+
+    public IDisposable BeginScope<TState>(TState state) where TState : notnull => default!;
+
+    public bool IsEnabled(LogLevel logLevel) => logLevel >= _level;
+
+    public void Log<TState>(
+      LogLevel logLevel,
+      EventId eventId,
+      TState state,
+      Exception? exception,
+      Func<TState, Exception?, string> formatter)
+    {
+      if (!IsEnabled(logLevel)) return;
+
+      _messages.Add($"{DateTime.UtcNow:u} | {logLevel.ToString()[..3].ToUpperInvariant()} | {formatter(state, exception)}");
+    }
+  }
+
+  private List<string> LogMessages { get; set; } = new();
+
+  private MonacoEditor? Editor { get; set; }
+  private string? ValueToSet { get; set; }
+  private string? InputRunValue { get; set; }
+  private string? OutputValue { get; set; }
+  private string? SelectedOption { get; set; }
+  private List<OptionItem>? Options { get; set; }
+
+  private class OptionItem
+  {
+    public string? Name { get; set; }
+    public string? Value { get; set; }
+  }
+
+  protected override void OnInitialized()
+  {
+    LoadOptions();
+  }
+
+  private async void HandleDropdownChange(ChangeEventArgs e)
+  {
+    SelectedOption = e.Value!.ToString();
+    string selectedInput = SelectedOption!.Replace("TemplateScripts", "TemplateScriptInputs").Replace(".js", ".json");
+    string jsonContent = await File.ReadAllTextAsync(SelectedOption);
+    try
+    {
+      InputRunValue = await File.ReadAllTextAsync(selectedInput);
+    }
+    catch (FileNotFoundException)
+    {
+      InputRunValue = "{}";
+    }
+    await Editor!.SetValue(jsonContent);
+  }
+
+  private void LoadOptions()
+  {
+    Options = new List<OptionItem>();
+
+    string jsonFilesPath = Path.Combine(WebHostEnvironment.WebRootPath, "Assets/TemplateScripts");
+    string[] jsonFilePaths = Directory.GetFiles(jsonFilesPath, "*.js");
+    foreach (var filePath in jsonFilePaths)
+    {
+      string fileName = Path.GetFileNameWithoutExtension(filePath);
+      Options.Add(new OptionItem {Name = fileName, Value = filePath});
+    }
+  }
+
+
+  private StandaloneEditorConstructionOptions EditorConstructionOptions(MonacoEditor editor)
+  {
+    return new StandaloneEditorConstructionOptions
+        {
+            Language = "javascript",
+            GlyphMargin = true,
+            Value = "\"use strict\";\n" +
+                    "function main() {\n" +
+                    "	return _message;\n" +
+                    "}\n" +
+                    "\n"
+        };
+  }
+
+  private async Task EditorOnDidInit(MonacoEditorBase editor)
+  {
+    new BlazorMonaco.QuickSuggestionsOptions();
+    await Editor!.AddCommand((int)KeyMode.CtrlCmd | (int)KeyCode.KEY_H, (editor, keyCode) =>
+    {
+      Console.WriteLine("Ctrl+H : Initial editor command is triggered.");
+    });
+  }
+
+  private void OnContextMenu(EditorMouseEvent eventArg)
+  {
+    Console.WriteLine("OnContextMenu : " + System.Text.Json.JsonSerializer.Serialize(eventArg));
+  }
+
+  private static Task ChangeTheme(ChangeEventArgs e)
+  {
+    if (e.Value == null) return Task.CompletedTask;
+    
+    var newTheme = e.Value.ToString();
+    Console.WriteLine($"setting theme to: {newTheme}");
+    return MonacoEditorBase.SetTheme(newTheme);
+  }
+
+  private async Task SetValue()
+  {
+    //Console.WriteLine($"setting value to: {ValueToSet}");
+    try
+    {
+      var script = JToken.Parse(ValueToSet!)!["Script"]!.Value<string>();
+      await Editor!.SetValue(script);
+    }
+    catch (Exception e)
+    {
+      Console.WriteLine("Invalid import value");
+      Console.WriteLine(e.ToString());
+    }
+  }
+
+  private static HttpClient _cl = new HttpClient();
+
+  private async Task TestRun()
+  {
+    OutputValue = string.Empty;
+    LogMessages = new(); //string.Empty;
+    var logger = new ListLogger(LogMessages, LogLevel.Trace);
+    try
+    {
+      var input = string.IsNullOrWhiteSpace(InputRunValue) ? "{}" : InputRunValue;
+
+      var messagePayload = JObject.Parse(input);
+      var script = await Editor!.GetValue();
+
+      var msg = new Message(Guid.NewGuid(), MessageType.Request, messagePayload, null);
+      var cancellation = new CancellationTokenSource();
+
+      var message = msg.Payload;
+      var jobId = msg.JobId;
+      var result = ScriptUtils.RunScript(logger, null, message, jobId, script, null, cancellation.Token);
+
+      OutputValue = result switch
+      {
+        Success s => JsonConvert.SerializeObject(s, Formatting.Indented),
+        FatalError e => $"{e.ErrorType}: {e.ErrorMessage}",
+        _ => "Unknown result type"
+      };
+    }
+    catch (Exception e)
+    {
+      Console.WriteLine(e);
+      OutputValue = $"Unexpected error: {e}\n{e.StackTrace}";
+      LogMessages = e.StackTrace?.Split(Environment.NewLine).ToList() ?? new List<string>();
+    }
+  }
+
+  private async Task GetValue()
+  {
+    var val = await Editor!.GetValue();
+    Console.WriteLine($"value is: {val}");
+  }
+
+  private async Task AddCommand()
+  {
+    await Editor!.AddCommand((int)KeyMode.CtrlCmd | (int)KeyCode.Enter, (editor, keyCode) =>
+    {
+      Console.WriteLine("Ctrl+Enter : Editor command is triggered.");
+    });
+  }
+
+  private async Task AddAction()
+  {
+    await Editor!.AddAction("testAction", "Test Action", new int[] {(int)KeyMode.CtrlCmd | (int)KeyCode.KEY_D, (int)KeyMode.CtrlCmd | (int)KeyCode.KEY_B}, null, null, "navigation", 1.5, (editor, keyCodes) =>
+    {
+      Console.WriteLine("Ctrl+D : Editor action is triggered.");
+    });
+  }
+
+  private async Task ExportToDatabase()
+  {
+    var val = await Editor!.GetValue();
+    var jval = JObject.FromObject(new {Script = val});
+    var jvalstr = jval.ToString(Newtonsoft.Json.Formatting.None);
+    await JSRuntime.InvokeVoidAsync("globalUtils.robustCopyToClipBoard", jvalstr);
+  }
+
+
+  private async Task ExportToJs()
+  {
+    var val = await Editor!.GetValue();
+    await JSRuntime.InvokeVoidAsync("globalUtils.robustCopyToClipBoard", val);
+  }
+
+}

@@ -1,0 +1,22 @@
+{
+  "workflowId": "",
+  "jobNodes": [
+    {
+      "id": "",
+      "dependencies": [],
+      "jobData": {},
+      "jobInfo": {
+		"runtime": "",
+		"type": "Docs",
+		"provider": "Debug",
+		"scenario": "",
+		"language": null,
+		"formatString": "Type.Provider"
+      },
+      "scripts": {
+        "input": "",
+        "output": ""
+      }
+    }
+  ]
+}

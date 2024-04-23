@@ -1,0 +1,264 @@
+@page "/tester"
+@implements IDisposable
+@using BlazorMonaco
+@using System
+@using System.Text
+@using Newtonsoft.Json.Linq
+@using Selma.Orchestration.Models
+@using Selma.Orchestration.TaskMQUtils
+@using Selma.Orchestration.OrchestrationDB
+@using Microsoft.Extensions.Logging.Abstractions;
+@inject IJSRuntime JSRuntime
+@inject ILogger<Index> Logger
+@inject IConfiguration Configuration
+@inject IWebHostEnvironment WebHostEnvironment
+
+<h3>Simple Worker Tester</h3>
+
+<div class="container-fluid">
+    <div class="row mb-3">
+        <label class="col-auto col-form-label">Worker Type</label>
+        <div class="col-auto">
+            <button class="btn btn-primary" @onclick="TestRun">Test Run</button>
+       </div> 
+       <label class="col-auto col-form-label">Theme</label>
+        <div class="col-auto">
+            <select class="form-control" @onchange="ChangeTheme">
+                <option value="vs">Visual Studio</option>
+                <option value="vs-dark">Visual Studio Dark</option>
+                <option value="hc-black">High Contrast Black</option>
+            </select>
+        </div>
+        <label class="col-auto col-form-label">Remote</label>
+        <div class="col-auto">
+            <input @bind="MaestroUrl"/>
+       </div> 
+    </div>
+    <div class="row">
+    </div>
+    <div class="row">
+        <div class="col-4">
+            <label class="col-form-label">Input Worker Graph</label>
+            <textarea class="form-control"  type="text" @bind="InputRunGraph" style="height: 600px;"></textarea>
+        </div>
+        <div class="col-4">
+            <label class="col-form-label">Input job data</label>
+            <textarea class="form-control"  type="text" @bind="InputRunValue" style="height: 600px;"></textarea>
+        </div>
+        <div class="col-4">
+            <label class="col-form-label" for="script-templates">Script: </label>
+            <select id="optionsDropdown" name="script-templates" class="col-form-select" @onchange="HandleDropdownChange">
+                @foreach (var option in Options)
+                {
+                  <option value="@option.Value" >@option.Name</option>
+                }
+            </select>
+
+            <MonacoEditor @ref="_editor" Id="sample-code-editor-123" 
+            ConstructionOptions="EditorConstructionOptions" 
+            OnContextMenu="OnContextMenu"
+            />
+        </div>
+    </div>
+    <div class="row">
+    <div class="col">
+    <label class="col-form-label">Output</label>
+    @if(FetchingOutput){
+      
+      <div class="spinner"></div>
+    }
+    @if(OutputValue != null){
+      
+      <textarea class="form-control font-monospace" rows="20" type="text" @bind="OutputValue" readonly style="background-color: #fff !important;"></textarea>
+    }
+    
+     </div>
+    </div>
+   
+</div>
+
+    @code {
+    private MonacoEditor? _editor { get; set; }
+    private MQConsumer? resultConsumer { get; set; }
+    private string? InputRunValue { get; set; }
+    private string? InputRunGraph{ get; set; }
+    private bool FetchingOutput { get; set;}
+    private string? MaestroUrl { get; set;}
+    private string? OutputValue { get; set; }
+    private CancellationTokenSource? tokenSource { get; set; }
+    private Guid blazorId { get; set; } = Guid.NewGuid();
+    private string? SelectedOption { get; set; }
+    private List<OptionItem>? Options { get; set; }
+    private class OptionItem
+      {
+      public string? Name { get; set; }
+      public string? Value { get; set; }
+    }
+  protected override async void OnInitialized()
+  {   
+      LoadOptions();
+      MaestroUrl = Configuration["MAESTRO_URL"];
+
+      InputRunGraph = System.IO.File.ReadAllText(Path.Combine(WebHostEnvironment.WebRootPath, "Assets/WorkFlowGraphs/SingleRunGraph.json"));
+      InputRunValue = "{}";
+      //Initialize the consumer worker
+      var queueManager = new MQManager(Configuration, new NullLogger<MQConsumer>());
+      var queueName = $"Worker.Results.Debug.{Guid.NewGuid()}";
+
+      var queueArguments = new Dictionary<string, object>()
+            {
+              { "x-message-ttl", Convert.ToInt32(Configuration["RabbitMQ:ClientQueueSettings:x-message-ttl"])},
+              { "x-expires", Convert.ToInt32(Configuration["RabbitMQ:ClientQueueSettings:x-expires"])},
+              { "x-max-length", Convert.ToInt32(Configuration["RabbitMQ:ClientQueueSettings:x-max-length"])},
+              { "x-single-active-consumer", Convert.ToBoolean(Configuration["RabbitMQ:ClientQueueSettings:x-single-active-consumer"])}
+            };
+
+      queueManager.BindQueueToTopicExchange($"Worker.Results", queueName, "#",
+      durableQueue: false,
+      autoDeleteQueue: true,
+      exclusiveQueue: false,
+      queueArguments: queueArguments);
+
+      resultConsumer = new MQConsumer(Configuration, new NullLogger<MQConsumer>(), queueName);
+      //Initialize result debug consumer worker
+      tokenSource = new CancellationTokenSource();
+
+      Func<Message, CancellationToken, Task> f = async (message, stoppingToken) =>
+      {
+        var messageBlazorId = message.Metadata["blazorId"]?.ToString();
+
+        if(messageBlazorId != null && new Guid(messageBlazorId) == blazorId){
+          OutputValue = message.Payload.ToString();
+          FetchingOutput = false;
+          await InvokeAsync(StateHasChanged);
+        }
+      };
+
+      Console.WriteLine("Starting Debug Consumer...");
+      try
+      {
+        await resultConsumer.Run(f, tokenSource.Token);
+      }
+      catch (System.OperationCanceledException) {};        
+  } 
+
+  private async void HandleDropdownChange(ChangeEventArgs e){
+    SelectedOption = e.Value!.ToString();
+    string selectedInput = SelectedOption!.Replace("TemplateScripts", "TemplateScriptInputs").Replace(".js", ".json");
+    string jsonContent = System.IO.File.ReadAllText(SelectedOption);
+    try{
+      InputRunValue = System.IO.File.ReadAllText(selectedInput);
+    } catch (FileNotFoundException){
+      InputRunValue = "{}";
+    }
+    await _editor!.SetValue(jsonContent);
+  }
+  
+  private void LoadOptions()
+  {
+      Options = new List<OptionItem>();
+
+      string jsonFilesPath = Path.Combine(WebHostEnvironment.WebRootPath, "Assets/TemplateScripts");
+      string[] jsonFilePaths = Directory.GetFiles(jsonFilesPath, "*.js");
+      foreach (var filePath in jsonFilePaths)
+      {
+          string fileName = Path.GetFileNameWithoutExtension(filePath);
+          Options.Add(new OptionItem { Name = fileName, Value = filePath });
+      }
+  }
+
+  public void Dispose(){
+    if(resultConsumer != null){
+      Console.WriteLine("Closing Debug Consumer Connection...");
+      resultConsumer.CloseConnection();
+    }
+  }
+
+  private StandaloneEditorConstructionOptions EditorConstructionOptions(MonacoEditor editor)
+  {
+    return new StandaloneEditorConstructionOptions
+        {
+            Language = "javascript",
+            ReadOnly = false,
+            GlyphMargin = true,
+            Value = "\"use strict\";\n" +
+                    "function main() {\n" +
+                    "	return _message;\n" +
+                    "}\n" +
+                    "\n"
+        };
+  }
+
+    private void OnContextMenu(EditorMouseEvent eventArg)
+  {
+    Console.WriteLine("OnContextMenu : " + System.Text.Json.JsonSerializer.Serialize(eventArg));
+  }
+
+  private async Task ChangeTheme(ChangeEventArgs e)
+  {
+    Console.WriteLine($"setting theme to: {e.Value!.ToString()}");
+    await MonacoEditor.SetTheme(e.Value.ToString());
+  }
+
+  private static HttpClient _cl = new HttpClient();
+
+  private async Task TestRun()
+  {
+    OutputValue = null;
+    try
+    {
+      var input = string.IsNullOrWhiteSpace(InputRunValue) ? "{}" : InputRunValue;
+      var inputGraphString = string.IsNullOrWhiteSpace(InputRunGraph) ? "{}" : InputRunGraph;
+  
+      var jobData = JObject.Parse(input);
+      var inputGraph = JObject.Parse(inputGraphString);
+      var script = await _editor!.GetValue();
+      
+      //Add Script to job data
+      jobData.Add(
+        new JProperty("Details",
+          new JObject
+          {
+            new JProperty("Script", script)
+          }
+         )
+      );
+          
+      //Check if the Queue of the first jobnode exists
+      var jobInfo = new JobInfo(
+        type: inputGraph["jobNodes"]![0]!["jobInfo"]!["type"]!.ToString(),
+        provider: inputGraph["jobNodes"]![0]!["jobInfo"]!["provider"]!.ToString(),
+        formatString: inputGraph["jobNodes"]![0]!["jobInfo"]!["formatString"]!.ToString()
+       );
+      var queueName = jobInfo.QueueName();
+
+      if(resultConsumer!.QueueExists(queueName)){
+        FetchingOutput = true;
+        //Replace first node data and script
+        inputGraph["workflowId"] = Guid.NewGuid();
+        inputGraph["jobNodes"]![0]!["id"] = Guid.NewGuid();
+        inputGraph["jobNodes"]![0]!["jobData"] = jobData;
+        inputGraph["jobNodes"]![0]!["jobMetadata"] = new JObject{new JProperty("blazorId", blazorId)};
+      
+        //Enqueue graph request
+        var enqueueRequest = new StringContent(inputGraph.ToString(), Encoding.UTF8, "application/json");
+        var result = await _cl.PostAsync(MaestroUrl, enqueueRequest);
+        OutputValue = result.ToString();
+      } else {
+        OutputValue = $"Job Queue: {queueName} does not exist...";
+      }
+      
+    }
+    catch(NullReferenceException e){
+        FetchingOutput = false;
+        OutputValue = $"Missing required data in Input Graph: {e}";
+    }
+    catch (Exception e)
+    {
+      Console.WriteLine(e);
+      OutputValue = $"Unexpected error: {e}\n{e.StackTrace}";
+      FetchingOutput = false;
+    }
+    
+  }
+}

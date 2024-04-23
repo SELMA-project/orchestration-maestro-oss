@@ -1,0 +1,50 @@
+version: "3.1"
+
+services:
+  job_queue:
+    image: rabbitmq:3.9.13-management
+    ports:
+      - 5672:5672
+      - 15672:15672
+    volumes:
+      - "./config/rabbitmq:/etc/rabbitmq"
+  maestro:
+    depends_on:
+      - job_queue
+      - local_db
+      - worker-example
+    build:
+      context: ./
+      dockerfile: ./maestro/Dockerfile
+    image: orchestration-maestro
+    environment:
+      Development__RecreateDatabase: "true"
+      # To use Postgres:
+      ConnectionStrings__SelmaDBConnection: "Host=local_db;Port=5432;Database=Selma-dev;Username=Selma-dev;Password=password;"
+      # ConnectionStrings__SelmaDBConnection:  "Data Source=/db/orchestrator.db"
+      RabbitMQ__Url: "amqp://job_queue:5672"
+    ports:
+      - 10011:10000
+  worker-example:
+    build:
+      context: ./
+      dockerfile: ./worker-example/Dockerfile
+    image: worker-example
+    environment:
+      RabbitMQ__Url: "amqp://job_queue:5672"
+  worker-rest:
+    build:
+      context: ./
+      dockerfile: ./worker-rest/Dockerfile
+    image: worker-rest
+    environment:
+      RabbitMQ__Url: "amqp://job_queue:5672"
+  # To use Postgres:
+  local_db:
+    image: postgres:12
+    environment:
+      POSTGRES_PASSWORD: password
+      POSTGRES_USER: Selma-dev
+      POSTGRES_DB: Selma-dev
+    ports:
+      - "54321:5432"

@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net6.0</TargetFramework>
+    <RootNamespace>Selma.Orchestration</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\worker-template\worker-template.csproj" />
+    <ProjectReference Include="..\orchestration-common\orchestration-common.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="appsettings.json" CopyToPublishDirectory="Always" />
+    <!--<None Include="nlog.config" CopyToPublishDirectory="Always" />-->
+  </ItemGroup>
+  <!--<Target Name="CopyNLogToDebug" AfterTargets="AfterBuild">
+    <Copy SourceFiles="nlog.config" DestinationFolder="bin\debug\net5.0" />
+  </Target>
+  <Target Name="CopyNLogToRelease" AfterTargets="AfterBuild">
+    <Copy SourceFiles="nlog.config" DestinationFolder="bin\release\net5.0" />
+  </Target>-->
+</Project>

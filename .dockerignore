@@ -1,0 +1,8 @@
+*/appsettings.local.json
+*appsettings.local.json
+*/credentials.local.json
+*credentials.local.json
+.vscode
+.idea
+*/bin
+*/obj

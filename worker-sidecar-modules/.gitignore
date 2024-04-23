@@ -1,0 +1,11 @@
+bin/
+obj/
+.vscode/
+
+credentials.json
+sox/
+deploy/
+log/
+
+*.local.*
+scripts

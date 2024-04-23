@@ -1,0 +1,21 @@
+{
+  "workflowId": "ffa85f64-5717-4562-b3fc-2c963f66afa8",
+  "jobNodes": [
+    {
+      "id": "1816398a-87f7-4d77-9fdf-0030d1d854f8",
+      "Dependencies": [],
+      "JobData": { "Text": "France and Italy produce lot of wine.", "src": "en" , "dest": "lv" },
+      "JobType": "EasyNMT",
+      "JobProvider": "Selma"
+    },
+    {
+      "id": "2816398a-87f7-4d77-9fdf-0030d1d854f8",
+      "Dependencies": [
+        "1816398a-87f7-4d77-9fdf-0030d1d854f8"
+      ],
+      "JobData": { "Text": "France and Italy produce lot of wine.", "src": "lv" , "dest": "en" },
+      "JobType": "EasyNMT",
+      "JobProvider": "Selma"
+    }
+  ]
+}

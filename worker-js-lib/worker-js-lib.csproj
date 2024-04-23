@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <RootNamespace>Selma.Orchestration.WorkerJSLib</RootNamespace>
+		<PackageId>Selma.Orchestration.WorkerJSLib</PackageId>
+  </PropertyGroup>
+  <ItemGroup>
+		<PackageReference Include="Jint" Version="3.0.0-beta-2037" />
+		<PackageReference Include="nlog" Version="5.0.1" />
+		<PackageReference Include="nlog.extensions.logging" Version="5.0.1" />
+		<ProjectReference Include="..\worker-template\worker-template.csproj" />
+		<ProjectReference Include="..\orchestration-common\orchestration-common.csproj" />
+	</ItemGroup>
+
+</Project>

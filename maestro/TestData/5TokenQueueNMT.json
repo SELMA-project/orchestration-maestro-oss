@@ -1,0 +1,18 @@
+{
+workflowId: "ffa85f64-5717-4562-b3fc-2c963f66afa8",
+jobNodes: [
+{
+id: "1816398a-87f7-4d77-9fdf-0030d1d854f8",
+dependencies: [ ],
+jobData: {
+
+
+"text": ["Every day we are driving home the same route."], "source_lang": "en", "target_lang": "de", "max_length": 100, "perform_sentence_splitting": true
+
+
+},
+jobType: "EasyPython",
+jobProvider: "Selma"
+}
+]
+}
