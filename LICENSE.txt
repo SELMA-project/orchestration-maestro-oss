@@ -4,9 +4,9 @@ For research purposes only this software is distributed under the license below:
 
 The 3-Clause BSD License
  
-For Priberam Projected Clustering Software
+For Orchestration Maestro Software
  
-Copyright 2022 by PRIBERAM INFORMÁTICA, S.A. ("PRIBERAM") (www.priberam.com)
+Copyright 2024 by PRIBERAM INFORMÁTICA, S.A. ("PRIBERAM") (www.priberam.com)
  
 Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
  
